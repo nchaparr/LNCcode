@@ -26,12 +26,12 @@ rawfiles = []
 
 #set altitude range and date step sizes
 
-altrange = np.arange(10,8010,10)#meters
+altrange = np.arange(10,10010,10)#meters
 timestep = '120S' #seconds
 
 #set buffer around backscatter ratio of 1 for mask
 
-delta = 0.8
+delta = 0.1
 
 #check to see if each file has been processed before and separate processed
 #files into a new list
@@ -39,7 +39,7 @@ delta = 0.8
 for f in files:
     if '_proc' in f or '.pickle' in f:
         procfiles.append(f)
-    else:
+    elif '.txt' in f:
         rawfiles.append(f)
 
 #search through list of files to separate fields to be used as a mask from those
@@ -47,7 +47,7 @@ for f in files:
 #initially, mask files are designated BR1064 for 1064nm Backscatter Ratio
 
 for f in rawfiles:
-    if 'BR1064' in f:
+    if 'BR' in f:
         maskfiles.append(f)
     else:
         datafiles.append(f)
@@ -61,6 +61,7 @@ datafiles.sort()
 
 if len(maskfiles) != len(datafiles):
     sys.exit("Error: Mask files don't match data files")
+    
 
 #double check to make sure the mask files match up with the data files
 for d,m in zip(datafiles, maskfiles):
@@ -98,8 +99,8 @@ for d,m in zip(datafiles, maskfiles):
 d_event = d_event.sort_index()
 m_event = m_event.sort_index()
 
-start = d_event.index[0]
-end = d_event.index[-1]
+start = m_event.index[0]
+end = m_event.index[-1]
 
 d_event = LNC.time_resample(d_event,timestep, timerange = [start,end])
 m_event = LNC.time_resample(m_event,timestep,timerange = [start,end])

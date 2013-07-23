@@ -162,6 +162,8 @@ def BR_mask(backscatter, data, delta):
     mask = backscatter.applymap(lambda x: not x <= 1+delta)
 
     masked_data = mask*data
+    
+    print 'Done!'
 
     return masked_data
 

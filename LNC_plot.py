@@ -50,23 +50,17 @@ def backscatter_plot(fig, ax, xdata, ydata, data, fsize = 21):
     #set colormap to be the same as 'jet' with the addition of white color for
     #depol ratios set to identiacally zero because they couldn't be calculated
     cdict = {'red': ((0,0,0),
-                     (0.0099,0,0),
-                     (0.01, 1, 0),
                      (0.35, 0, 0),
                      (0.66, 1, 1),
                      (0.89,1, 1),
                      (1, 0.5, 0.5)),
          'green': ((0,0,0),
-                   (0.0099,0,0),
-                   (0.01, 1, 0),
                    (0.125,0, 0),
                    (0.375,1, 1),
                    (0.64,1, 1),
                    (0.91,0,0),
                    (1, 0, 0)),
-         'blue': ((0,0,0),
-                  (0.0099,0,0),
-                  (0.01,1,0.5),
+         'blue': ((0,0.1,0.1),
                   (0.11, 1, 1),
                   (0.34, 1, 1),
                   (0.65,0, 0),
@@ -74,7 +68,7 @@ def backscatter_plot(fig, ax, xdata, ydata, data, fsize = 21):
     
     my_cmap = colors.LinearSegmentedColormap('my_colormap',cdict,1064)
     
-    im = ax.imshow(data, vmin=0, vmax=10, cmap = my_cmap)
+    im = ax.imshow(data, vmin=1, vmax=10, cmap = my_cmap)
     forceAspect(ax,ar)       
     altticks(ax, ydata, fsize = fsize, tcolor = 'w')
 
@@ -149,7 +143,7 @@ def altticks(ax, axisdat, numticks = 5, fsize = 21, tcolor = 'k'):
         line.set_color(tcolor)
         line.set_markersize(10)
         line.set_markeredgewidth(3)
-    
+        
 
     
 if __name__ == '__main__':
@@ -158,6 +152,7 @@ if __name__ == '__main__':
     import LNC_tools as LNC
     import matplotlib.pyplot as plt
     import numpy as np
+    import datetime as dt
 
 #    os.chdir('K:\CORALNet\Data\ASCII Files')
 
@@ -192,40 +187,68 @@ if __name__ == '__main__':
 ##
 ##    plt.subplots_adjust(top = 0.86, bottom = 0.01, left = 0.09, right = 0.95)
 ##
-
+    
+    startdate = dt.datetime(2013,4,29,17,0)
+    enddate = dt.datetime(2013,4,30,16,0)
+    minalt = 500
+    maxalt = 10000
+    
     fig = plt.figure()
 
     h_set = ['12']
-    for n in range(1,3):    
-        
-        if n == 1:
-            filename = LNC.get_files('Select first file to be plotted', filetype = ('.pickle','*.pickle'))
-            df = pan.load(filename[1:-1])
-            datetime = df.index
-            alt = df.columns
-            ax = fig.add_subplot(2,1,n)
-            im = backscatter_plot(fig, ax, datetime,alt[::-1],df.T[::-1], fsize = fsize)
-            cbar = fig.colorbar(im, orientation = 'vertical', aspect = 6)
-            cbar.ax.tick_params(labelsize = fsize)
-            dateticks(ax, datetime, hours = h_set, fsize = fsize, tcolor = 'w')
-            ax.set_xticklabels([])
+    
+    olddir = os.getcwd()
+    
+    os.chdir('C:\Users\dashamstyr\Desktop\CORALNet - May2013\ASCII')
+    
+    filepath = LNC.get_files('Select first file to be plotted', filetype = ('.pickle','*.pickle'))
+    
+    if filepath[0] == '{':
+        filepath = filepath[1:-1]
+    
+    [path, filename] = os.path.split(filepath)
+    
+    os.chdir(path)
+    df = pan.load(filename)
+    df = df.loc[startdate:enddate,:maxalt]
+    if minalt != 0:
+        df.loc[:,:minalt] = 'nan'
+    
+    datetime = df.index
+    alt = df.columns
+    ax = fig.add_subplot(2,1,1)
+    im = backscatter_plot(fig, ax, datetime,alt[::-1],df.T[::-1], fsize = fsize)
+    cbar = fig.colorbar(im, orientation = 'vertical', aspect = 6)
+    cbar.ax.tick_params(labelsize = fsize)
+    dateticks(ax, datetime, hours = h_set, fsize = fsize, tcolor = 'w')
+    ax.set_xticklabels([])
 
-        if n == 2:
-            filename = LNC.get_files('Select second file to be plotted', filetype = ('.pickle','*.pickle'))
-            df = pan.load(filename[1:-1])
-            datetime = df.index
-            alt = df.columns
-            ax = fig.add_subplot(2,1,n)
-            im = depol_plot(fig, ax, datetime,alt[::-1],df.T[::-1], fsize = fsize)
-            cbar = fig.colorbar(im, orientation = 'vertical', aspect = 6)
-            cbar.set_ticks(np.arange(0,0.6,0.1))
-            cbar.set_ticklabels(np.arange(0,0.6,0.1))
-            #set axis ranges and tickmarks based on data ranges
-            dateticks(ax, datetime, hours = h_set, fsize = fsize)
-            ax.set_xlabel('Time [PDT]',fontsize = fsize+4)
-            fig.autofmt_xdate()
+    filename = LNC.get_files('Select second file to be plotted', filetype = ('.pickle','*.pickle'))
+    
+    if filename[0] == '{':
+        filename = filename[1:-1]
+        
+    df = pan.load(filename)
+    df = df.loc[startdate:enddate,:maxalt]
+    if minalt != 0:
+        df.loc[:,:minalt] = 'nan'
+    datetime = df.index
+    alt = df.columns
+    ax = fig.add_subplot(2,1,2)
+    im = depol_plot(fig, ax, datetime,alt[::-1],df.T[::-1], fsize = fsize)
+    cbar = fig.colorbar(im, orientation = 'vertical', aspect = 6)
+    cbar.set_ticks(np.arange(0,0.6,0.1))
+    cbar.set_ticklabels(np.arange(0,0.6,0.1))
+    #set axis ranges and tickmarks based on data ranges
+    dateticks(ax, datetime, hours = h_set, fsize = fsize)
+    ax.set_xlabel('Time [PDT]',fontsize = fsize+4)
+    fig.autofmt_xdate()
         
 
         ##plt.savefig(savetitle,dpi = 100, edgecolor = 'b', bbox_inches = 'tight')
     fig.set_size_inches(figheight*ar,figheight) 
-    plt.show()  
+    fig.tight_layout()
+    plt.show() 
+    
+    os.chdir(olddir)
+    
